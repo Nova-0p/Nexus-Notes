@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nexus Notes | AI Summarizer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    :root {
+      --black: #0a0a0a;
+      --dark-gray: #1a1a1a;
+      --medium-gray: #333333;
+      --light-gray: #e6e6e6;
+      --white: #ffffff;
+      --accent: #888888;
+      --primary: #4a6cf7;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--light-gray);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+      background-color: var(--black);
+    }
+
+    #particles-js {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      background-color: var(--black);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      background: rgba(26, 26, 26, 0.85);
+      border-radius: 16px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+      padding: 40px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      margin: 20px;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 2.2rem);
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--white);
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: clamp(0.9rem, 2vw, 1rem);
+      color: var(--accent);
+      margin-bottom: 30px;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+    }
+
+    .upload-container {
+      position: relative;
+      margin-bottom: 30px;
+    }
+
+    .upload-box {
+      border: 2px dashed rgba(255, 255, 255, 0.1);
+      background: linear-gradient(135deg, 
+        rgba(15, 15, 15, 0.5) 0%,
+        rgba(20, 20, 20, 0.6) 50%,
+        rgba(15, 15, 15, 0.5) 100%
+      );
+      padding: clamp(30px, 8vw, 50px) 15px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.1) 40%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0.1) 60%,
+        transparent 70%
+      );
+      transform: translateX(-100%) translateY(-100%) rotate(45deg);
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .upload-box:hover::before {
+      transform: translateX(50%) translateY(50%) rotate(45deg);
+    }
+
+    .upload-box:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      background: linear-gradient(135deg, 
+        rgba(20, 20, 20, 0.6) 0%,
+        rgba(30, 30, 30, 0.8) 50%,
+        rgba(20, 20, 20, 0.6) 100%
+      );
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .upload-box > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .upload-box.active {
+      border-color: var(--light-gray);
+      background: linear-gradient(135deg, 
+        rgba(25, 25, 25, 0.7) 0%,
+        rgba(35, 35, 35, 0.8) 50%,
+        rgba(25, 25, 25, 0.7) 100%
+      );
+    }
+
+    .upload-icon {
+      font-size: clamp(2rem, 6vw, 2.5rem);
+      color: var(--light-gray);
+      margin-bottom: 15px;
+      transition: all 0.3s ease;
+    }
+
+    @keyframes floatUp {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    .upload-box:hover .upload-icon {
+      animation: floatUpHover 1s ease-in-out infinite;
+      color: var(--white);
+      transform: scale(1.05);
+    }
+
+    @keyframes floatUpHover {
+      0%, 100% {
+        transform: translateY(-2px) scale(1.05);
+      }
+      50% {
+        transform: translateY(-12px) scale(1.05);
+      }
+    }
+
+    .upload-box.file-selected .upload-icon {
+      animation: none;
+      transform: none;
+    }
+
+    .upload-text {
+      font-size: clamp(0.95rem, 3vw, 1.1rem);
+      color: var(--accent);
+      margin-bottom: 5px;
+    }
+
+    .file-info {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      margin-top: 15px;
+      animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .file-info.show {
+      display: flex;
+    }
+
+    .file-icon {
+      color: var(--light-gray);
+      font-size: clamp(1rem, 3vw, 1.2rem);
+    }
+
+    .file-name {
+      font-weight: 500;
+      color: var(--white);
+      font-size: clamp(0.9rem, 3vw, 1rem);
+      word-break: break-word;
+      text-align: center;
+    }
+
+    .file-size {
+      font-size: clamp(0.75rem, 2.5vw, 0.8rem);
+      color: var(--accent);
+    }
+
+    #file-input {
+      display: none;
+    }
+
+    .options-container {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .option-group {
+      margin-bottom: 15px;
+    }
+
+    .option-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      color: var(--light-gray);
+      font-weight: 500;
+    }
+
+    .select-dropdown {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 8px;
+      background: rgba(30, 30, 30, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--white);
+      font-size: 0.95rem;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .select-dropdown:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .select-dropdown:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(74, 108, 247, 0.2);
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--medium-gray), var(--dark-gray));
+      color: var(--white);
+      border: none;
+      padding: 15px 30px;
+      font-size: 1rem;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 200px;
+      width: 100%;
+      max-width: 300px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: 0.5s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:disabled {
+      background: var(--dark-gray);
+      color: var(--accent);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .btn:disabled::before {
+      display: none;
+    }
+
+    .btn i {
+      margin-right: 10px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #3a5bd9);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: center;
+    }
+
+    .btn-secondary {
+      background: rgba(30, 30, 30, 0.8);
+      min-width: 120px;
+    }
+
+    .output-format-group {
+      margin-bottom: 20px;
+    }
+
+    .format-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .format-btn {
+      flex: 1;
+      padding: 12px 20px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      background: rgba(30, 30, 30, 0.6);
+      color: var(--accent);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .format-btn.active {
+      border-color: var(--primary);
+      background: rgba(74, 108, 247, 0.1);
+      color: var(--white);
+    }
+
+    .format-btn:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(40, 40, 40, 0.8);
+    }
+
+    .format-btn.active:hover {
+      border-color: var(--primary);
+      background: rgba(74, 108, 247, 0.2);
+    }
+
+    .status {
+      margin-top: 25px;
+      font-size: clamp(0.85rem, 3vw, 0.95rem);
+      color: var(--accent);
+      min-height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+    }
+
+    .status.success {
+      color: var(--white);
+    }
+
+    .status.error {
+      color: #ff4d4d;
+    }
+
+    .loading {
+      display: none;
+      margin-top: 25px;
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top: 4px solid var(--light-gray);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .features {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .feature {
+      background: rgba(15, 15, 15, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: clamp(0.7rem, 2.5vw, 0.8rem);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .feature:hover {
+      background: rgba(30, 30, 30, 0.7);
+      transform: translateY(-2px);
+    }
+
+    .feature i {
+      color: var(--light-gray);
+      margin-right: 8px;
+      font-size: 0.8rem;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 15px;
+        align-items: flex-start;
+      }
+      
+      .container {
+        padding: 30px 20px;
+        border-radius: 12px;
+      }
+      
+      .upload-box {
+        padding: 35px 15px;
+      }
+      
+      .btn {
+        padding: 14px 20px;
+        font-size: 0.95rem;
+      }
+      
+      .features {
+        gap: 10px;
+      }
+      
+      .feature {
+        padding: 7px 14px;
+      }
+
+      .btn-group {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .btn-secondary {
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .format-buttons {
+        flex-direction: column;
+      }
+
+      @keyframes floatUp {
+        0%, 100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-5px);
+        }
+      }
+
+      @keyframes floatUpHover {
+        0%, 100% {
+          transform: translateY(-1px) scale(1.03);
+        }
+        50% {
+          transform: translateY(-8px) scale(1.03);
+        }
+      }
+    }
+
+    @media (max-width: 320px) {
+      .container {
+        padding: 25px 15px;
+      }
+      
+      h1 {
+        font-size: 1.6rem;
+      }
+      
+      .upload-text {
+        font-size: 0.85rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .upload-icon {
+        animation: none;
+      }
+      
+      .upload-box:hover .upload-icon {
+        animation: none;
+        transform: scale(1.05);
+      }
+
+      .upload-box::before {
+        transition: none;
+      }
+
+      .upload-box:hover::before {
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Particle Background -->
+  <div id="particles-js"></div>
+  
+  <!-- Main Content -->
+  <div class="container">
+    <h1>Nexus Notes</h1>
+    <p class="subtitle">Upload documents for AI-powered summaries</p>
+
+    <div class="upload-container">
+      <div class="upload-box" id="upload-box">
+        <div class="upload-icon">
+          <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <p class="upload-text">Drag & drop files or tap to browse</p>
+        <p class="upload-text" style="font-size: 0.9em;">PDF, PowerPoint, and text files supported</p>
+        
+        <div class="file-info" id="file-info">
+          <i class="fas fa-file-alt file-icon"></i>
+          <span class="file-name" id="file-name"></span>
+          <span class="file-size" id="file-size"></span>
+        </div>
+      </div>
+      <input type="file" id="file-input" accept=".pdf,.ppt,.pptx,.txt" />
+    </div>
+
+    <div class="options-container">
+      <div class="option-group">
+        <label class="option-label" for="summary-type">Summary Type</label>
+        <select class="select-dropdown" id="summary-type">
+          <option value="exam_focused">Exam Focused 🎓</option>
+          <option value="research_summary">Research Summary 🔍</option>
+          <option value="business_analysis">Business Analysis 📈</option>
+          <option value="legal_summary">Legal Summary ⚖️</option>
+          <option value="meeting_notes">Meeting Notes 📝</option>
+          <option value="technical_documentation">Technical Documentation 💻</option>
+          <option value="medical_summary">Medical Summary 🩺</option>
+        </select>
+      </div>
+      
+      <div class="option-group output-format-group">
+        <label class="option-label">Output Format</label>
+        <div class="format-buttons">
+          <button class="format-btn active" data-format="pdf">
+            <i class="fas fa-file-pdf"></i> Professional PDF
+          </button>
+          <button class="format-btn" data-format="text">
+            <i class="fas fa-file-alt"></i> Plain Text
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="process-btn" disabled>
+      <i class="fas fa-robot"></i> Generate Summary
+    </button>
+    
+    <div class="status" id="status"></div>
+    
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <i class="fas fa-shield-alt"></i> Secure Processing
+      </div>
+      <div class="feature">
+        <i class="fas fa-brain"></i> AI-Powered
+      </div>
+      <div class="feature">
+        <i class="fas fa-file-pdf"></i> PDF Export
+      </div>
+      <div class="feature">
+        <i class="fas fa-infinity"></i> Unlimited
+      </div>
+    </div>
+  </div>
+
+  <!-- Particle.js Library -->
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  
+  <script>
+    // Initialize particle.js background
+    document.addEventListener('DOMContentLoaded', function() {
+      particlesJS('particles-js', {
+        "particles": {
+          "number": {
+            "value": 80,
+            "density": {
+              "enable": true,
+              "value_area": 800
+            }
+          },
+          "color": {
+            "value": "#ffffff"
+          },
+          "shape": {
+            "type": "circle",
+            "stroke": {
+              "width": 0,
+              "color": "#000000"
+            },
+            "polygon": {
+              "nb_sides": 5
+            }
+          },
+          "opacity": {
+            "value": 0.3,
+            "random": true,
+            "anim": {
+              "enable": true,
+              "speed": 1,
+              "opacity_min": 0.1,
+              "sync": false
+            }
+          },
+          "size": {
+            "value": 3,
+            "random": true,
+            "anim": {
+              "enable": false,
+              "speed": 40,
+              "size_min": 0.1,
+              "sync": false
+            }
+          },
+          "line_linked": {
+            "enable": true,
+            "distance": 150,
+            "color": "#555555",
+            "opacity": 0.2,
+            "width": 1
+          },
+          "move": {
+            "enable": true,
+            "speed": 2,
+            "direction": "none",
+            "random": true,
+            "straight": false,
+            "out_mode": "out",
+            "bounce": false,
+            "attract": {
+              "enable": false,
+              "rotateX": 600,
+              "rotateY": 1200
+            }
+          }
+        },
+        "interactivity": {
+          "detect_on": "canvas",
+          "events": {
+            "onhover": {
+              "enable": true,
+              "mode": "grab"
+            },
+            "onclick": {
+              "enable": true,
+              "mode": "push"
+            },
+            "resize": true
+          },
+          "modes": {
+            "grab": {
+              "distance": 140,
+              "line_linked": {
+                "opacity": 0.5
+              }
+            },
+            "push": {
+              "particles_nb": 4
+            }
+          }
+        },
+        "retina_detect": true
+      });
+    });
+
+    // App functionality
+    const fileInput = document.getElementById('file-input');
+    const uploadBox = document.getElementById('upload-box');
+    const processBtn = document.getElementById('process-btn');
+    const statusText = document.getElementById('status');
+    const loadingSpinner = document.getElementById('loading');
+    const fileInfo = document.getElementById('file-info');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const summaryType = document.getElementById('summary-type');
+    const formatButtons = document.querySelectorAll('.format-btn');
+
+    let selectedFile = null;
+    let selectedFormat = 'pdf'; // Default to PDF
+
+    // Format file size
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Handle format selection
+    formatButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        formatButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedFormat = btn.dataset.format;
+      });
+    });
+
+    // Handle drag/drop or click
+    uploadBox.addEventListener('click', () => fileInput.click());
+    
+    uploadBox.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadBox.classList.add('active');
+    });
+    
+    uploadBox.addEventListener('dragleave', () => {
+      uploadBox.classList.remove('active');
+    });
+    
+    uploadBox.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadBox.classList.remove('active');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelect();
+      }
+    });
+
+    // File selection
+    fileInput.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect() {
+      selectedFile = fileInput.files[0];
+      if (selectedFile) {
+        uploadBox.classList.add('file-selected');
+        uploadBox.querySelector('.upload-icon').innerHTML = '<i class="fas fa-file-alt"></i>';
+        uploadBox.querySelectorAll('.upload-text').forEach(el => el.style.display = 'none');
+        
+        fileName.textContent = selectedFile.name;
+        fileSize.textContent = formatFileSize(selectedFile.size);
+        fileInfo.classList.add('show');
+        
+        processBtn.disabled = false;
+      }
+    }
+
+    // Process file - MAIN CHANGE HERE
+    processBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('prompt_type', summaryType.value);
+      formData.append('output_format', selectedFormat); // NEW: Add output format
+
+      statusText.textContent = selectedFormat === 'pdf' ? "Generating professional PDF summary..." : "Processing your document...";
+      statusText.className = "status";
+      loadingSpinner.classList.add('show');
+      processBtn.disabled = true;
+
+      try {
+        const response = await fetch('http://localhost:5000/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Server error");
+        }
+
+        if (selectedFormat === 'pdf') {
+          // Handle PDF download
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = selectedFile.name.replace(/\.[^/.]+$/, '') + '_summary.pdf';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          
+          statusText.textContent = "PDF downloaded successfully!";
+        } else {
+          // Handle text download
+          const summary = await response.text();
+          const blob = new Blob([summary], { type: 'text/plain' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = selectedFile.name.replace(/\.[^/.]+$/, '') + '_summary.txt';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          
+          statusText.textContent = "Text file downloaded successfully!";
+        }
+        
+        statusText.className = "status success";
+        
+        // Reset form after 3 seconds
+        setTimeout(() => {
+          resetForm();
+        }, 3000);
+        
+      } catch (error) {
+        console.error('Error:', error);
+        statusText.textContent = "Error: " + error.message;
+        statusText.className = "status error";
+        processBtn.disabled = false;
+      } finally {
+        loadingSpinner.classList.remove('show');
+      }
+    });
+
+    function resetForm() {
+      fileInput.value = '';
+      selectedFile = null;
+      uploadBox.classList.remove('file-selected');
+      uploadBox.querySelector('.upload-icon').innerHTML = '<i class="fas fa-cloud-upload-alt"></i>';
+      uploadBox.querySelectorAll('.upload-text').forEach(el => el.style.display = 'block');
+      fileInfo.classList.remove('show');
+      processBtn.disabled = true;
+      statusText.textContent = "";
+      statusText.className = "status";
+    }
+  </script>
+</body>
+</html>
